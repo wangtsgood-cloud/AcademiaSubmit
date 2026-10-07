@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { Submission, SubmissionComment } from './types';
+import { Submission } from './types';
 import { getStoredSubmissions, saveStoredSubmissions } from './utils/storage';
 import { Navbar } from './components/Navbar';
 import { StudentPortal } from './components/StudentPortal';
@@ -10,10 +10,10 @@ import { ReportPreviewModal } from './components/ReportPreviewModal';
 import { EmailVerificationModal } from './components/EmailVerificationModal';
 import { AuthModal } from './components/AuthModal';
 import { SubmissionGuidelinesView } from './components/SubmissionGuidelinesView';
-import { GraduationCap, ShieldCheck, Mail, BookOpen } from 'lucide-react';
+import { GraduationCap } from 'lucide-react';
 
 const MainAppContent: React.FC = () => {
-  const { currentUser, openVerificationModal } = useAuth();
+  const { currentUser } = useAuth();
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [activeTab, setActiveTab] = useState<'submissions' | 'guidelines'>('submissions');
 
@@ -43,41 +43,7 @@ const MainAppContent: React.FC = () => {
     setGradingSubmission(updatedSubmission);
   };
 
-  const handleAddComment = (
-    submissionId: string,
-    commentData: Omit<SubmissionComment, 'id' | 'createdAt'>
-  ) => {
-    const newComment: SubmissionComment = {
-      ...commentData,
-      id: `comm_${Date.now()}`,
-      createdAt: new Date().toLocaleString('zh-TW', { hour12: false }),
-    };
-
-    const nextSubmissions = submissions.map((s) => {
-      if (s.id === submissionId) {
-        return {
-          ...s,
-          comments: [...s.comments, newComment],
-        };
-      }
-      return s;
-    });
-
-    setSubmissions(nextSubmissions);
-    saveStoredSubmissions(nextSubmissions);
-
-    if (gradingSubmission && gradingSubmission.id === submissionId) {
-      setGradingSubmission({
-        ...gradingSubmission,
-        comments: [...gradingSubmission.comments, newComment],
-      });
-    }
-  };
-
   const handleStudentSubmit = (data: {
-    title: string;
-    abstract: string;
-    keywords: string[];
     fileName: string;
     fileSize: number;
     fileType: string;
@@ -94,9 +60,6 @@ const MainAppContent: React.FC = () => {
       const old = submissions[existingIndex];
       const updated: Submission = {
         ...old,
-        title: data.title,
-        abstract: data.abstract,
-        keywords: data.keywords,
         fileName: data.fileName,
         fileSize: data.fileSize,
         fileType: data.fileType,
@@ -120,10 +83,6 @@ const MainAppContent: React.FC = () => {
         studentName: currentUser.name,
         studentEmail: currentUser.email,
         department: currentUser.department,
-        title: data.title,
-        abstract: data.abstract,
-        keywords: data.keywords,
-        courseCode: '',
         courseName: '115學年度 第一學期 微機原理與微機介面技術 期末報告',
         submittedAt: now,
         updatedAt: now,
@@ -136,7 +95,6 @@ const MainAppContent: React.FC = () => {
         textContent: data.textContent,
         score: null,
         professorFeedback: '',
-        comments: [],
       };
 
       const next = [newSub, ...submissions];
@@ -183,7 +141,6 @@ const MainAppContent: React.FC = () => {
           <StudentPortal
             submission={currentStudentSubmission}
             onSubmitReport={handleStudentSubmit}
-            onAddComment={handleAddComment}
             onOpenPreview={handleOpenPreview}
           />
         ) : (
@@ -194,7 +151,7 @@ const MainAppContent: React.FC = () => {
             </div>
             <h2 className="text-xl font-bold text-slate-900">歡迎使用期末報告審閱與批改平台</h2>
             <p className="text-xs text-slate-600 leading-relaxed">
-              本系統要求學生帳號必須為學號 (32505030XX)，並經由校園電子郵件安全認證以保障繳交權利。教授端提供即時評閱、行內留言與原檔下載機制。
+              本系統要求學生帳號必須為學號 (32505030XX)，並經由校園電子郵件安全認證以保障繳交權利。教授端提供即時評閱與檔案下載機制。
             </p>
             <div className="flex items-center justify-center gap-3 pt-2">
               <button
@@ -225,7 +182,7 @@ const MainAppContent: React.FC = () => {
           <div className="flex items-center gap-4 text-[11px]">
             <span>身分安全防護：學號 32505030XX 嚴格驗證</span>
             <span aria-hidden="true">·</span>
-            <span>支援雙向留言與即時成績核發</span>
+            <span>支援即時成績核發與檔案下載機制</span>
           </div>
         </div>
       </footer>
@@ -244,7 +201,6 @@ const MainAppContent: React.FC = () => {
         isOpen={isGradingOpen}
         onClose={() => setIsGradingOpen(false)}
         onSaveGrading={handleSaveGrading}
-        onAddComment={handleAddComment}
       />
 
       <ReportPreviewModal

@@ -13,16 +13,6 @@ export interface User {
   createdAt: string;
 }
 
-export interface SubmissionComment {
-  id: string;
-  authorId: string;
-  authorName: string;
-  authorRole: UserRole;
-  content: string;
-  pageOrSection?: string;
-  createdAt: string;
-}
-
 export type SubmissionStatus = 'submitted' | 'grading' | 'graded' | 'resubmit_required';
 
 export interface Submission {
@@ -31,10 +21,7 @@ export interface Submission {
   studentName: string;
   studentEmail: string;
   department: string;
-  title: string;
-  abstract: string;
-  keywords: string[];
-  courseCode: string;
+  courseCode?: string;
   courseName: string;
   submittedAt: string;
   updatedAt: string;
@@ -50,7 +37,6 @@ export interface Submission {
   professorFeedback: string;
   gradedAt?: string;
   gradedBy?: string;
-  comments: SubmissionComment[];
 }
 
 export interface VerificationEmailPayload {

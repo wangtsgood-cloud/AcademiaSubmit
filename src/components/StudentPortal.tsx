@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Submission, SubmissionComment } from '../types';
-import { downloadFile, downloadGradingReport } from '../utils/download';
+import { Submission } from '../types';
+import { downloadFile } from '../utils/download';
 import {
   UploadCloud,
   FileText,
@@ -11,43 +11,30 @@ import {
   CheckCircle,
   AlertCircle,
   ShieldCheck,
-  Send,
   RefreshCw,
   Sparkles,
-  Info,
 } from 'lucide-react';
 
 interface StudentPortalProps {
   submission: Submission | null;
   onSubmitReport: (data: {
-    title: string;
-    abstract: string;
-    keywords: string[];
     fileName: string;
     fileSize: number;
     fileType: string;
     fileDataUrl?: string;
     textContent?: string;
   }) => void;
-  onAddComment: (submissionId: string, comment: Omit<SubmissionComment, 'id' | 'createdAt'>) => void;
   onOpenPreview: (submission: Submission) => void;
 }
 
 export const StudentPortal: React.FC<StudentPortalProps> = ({
   submission,
   onSubmitReport,
-  onAddComment,
   onOpenPreview,
 }) => {
   const { currentUser, openVerificationModal } = useAuth();
 
   const [isEditing, setIsEditing] = useState<boolean>(!submission);
-  const [title, setTitle] = useState<string>(submission?.title || '');
-  const [abstract, setAbstract] = useState<string>(submission?.abstract || '');
-  const [keywordInput, setKeywordInput] = useState<string>(
-    submission?.keywords.join(', ') || '分散式快取, 系統容錯, 高併發'
-  );
-
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileDataUrl, setFileDataUrl] = useState<string | undefined>(submission?.fileDataUrl);
   const [fileTextContent, setFileTextContent] = useState<string | undefined>(submission?.textContent);
@@ -55,8 +42,6 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-  // Discussion state
-  const [replyText, setReplyText] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   if (!currentUser) return null;
@@ -81,7 +66,7 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
       textReader.readAsText(file);
     } else {
       setFileTextContent(
-        `【上傳文件：${file.name}】\n規格：${(file.size / 1024 / 1024).toFixed(2)} MB\n類型：${file.type || '二進位應用程式/文件'}\n上傳日期戳記：${new Date().toLocaleString('zh-TW')}`
+        `【上傳文件：${file.name}】\n規格：${(file.size / 1024 / 1024).toFixed(2)} MB\n學生學號：${currentUser.studentId}\n學生姓名：${currentUser.name}\n繳交時間：${new Date().toLocaleString('zh-TW')}`
       );
     }
   };
@@ -102,16 +87,8 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
       return;
     }
 
-    if (!title.trim()) {
-      alert('請填寫期末專題報告題目');
-      return;
-    }
-    if (!abstract.trim()) {
-      alert('請填寫報告摘要說明');
-      return;
-    }
     if (!selectedFile && !submission) {
-      alert('請選取要上傳的報告檔案 (PDF / Word / ZIP)');
+      alert('請選取要上傳的期末報告檔案 (PDF / Word / ZIP)');
       return;
     }
 
@@ -123,19 +100,13 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
         if (prev >= 100) {
           clearInterval(interval);
           setTimeout(() => {
-            const fileName = selectedFile ? selectedFile.name : submission?.fileName || `${currentUser.studentId}_${currentUser.name}_期末報告.pdf`;
+            const fileName = selectedFile
+              ? selectedFile.name
+              : submission?.fileName || `${currentUser.studentId}_${currentUser.name}_微機原理與微機介面技術_期末報告.pdf`;
             const fileSize = selectedFile ? selectedFile.size : submission?.fileSize || 3500000;
             const fileType = selectedFile ? selectedFile.type : submission?.fileType || 'application/pdf';
 
-            const keywords = keywordInput
-              .split(/[,，]/)
-              .map((k) => k.trim())
-              .filter(Boolean);
-
             onSubmitReport({
-              title: title.trim(),
-              abstract: abstract.trim(),
-              keywords,
               fileName,
               fileSize,
               fileType,
@@ -154,19 +125,6 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
     }, 100);
   };
 
-  const handleStudentReply = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!replyText.trim() || !submission) return;
-
-    onAddComment(submission.id, {
-      authorId: currentUser.id,
-      authorName: currentUser.name,
-      authorRole: 'student',
-      content: replyText.trim(),
-    });
-    setReplyText('');
-  };
-
   return (
     <div className="space-y-6">
       {/* Student Banner */}
@@ -180,7 +138,7 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
             <span className="font-mono font-bold text-slate-800">學號：{currentUser.studentId}</span>
           </div>
           <h1 className="text-xl font-bold text-slate-900">
-            {currentUser.name} 同學 · 期末專題報告提交專區
+            {currentUser.name} 同學 · 期末報告提交專區
           </h1>
           <p className="text-xs text-slate-600 mt-1">
             截止期限：<span className="font-semibold text-rose-600">2026/10/15 23:59 止</span> (逾期將自動關閉上傳權限)
@@ -221,15 +179,16 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
             <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-3">
               <div>
                 <div className="text-xs text-slate-400">目前繳交版本：第 {submission.version} 版</div>
-                <h2 className="text-lg font-bold text-slate-900 mt-0.5">{submission.title}</h2>
+                <h2 className="text-lg font-bold text-slate-900 mt-0.5 font-mono">{submission.fileName}</h2>
               </div>
 
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => onOpenPreview(submission)}
-                  className="px-3 py-1.5 text-xs font-semibold text-slate-700 hover:text-slate-900 border border-slate-300 rounded-lg transition-colors"
+                  className="px-3 py-1.5 text-xs font-semibold text-slate-700 hover:text-slate-900 border border-slate-300 rounded-lg transition-colors flex items-center gap-1.5"
                 >
-                  報告預覽
+                  <FileText className="w-3.5 h-3.5" />
+                  <span>報告預覽</span>
                 </button>
                 <button
                   onClick={() => setIsEditing(true)}
@@ -306,14 +265,6 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
                 </span>
               </div>
             </div>
-
-            {/* Abstract preview */}
-            <div>
-              <div className="text-xs font-semibold text-slate-700 mb-1">報告摘要</div>
-              <p className="text-xs text-slate-600 bg-slate-50/60 p-3 rounded-lg border border-slate-100 leading-relaxed">
-                {submission.abstract}
-              </p>
-            </div>
           </div>
 
           {/* Professor Grading Feedback */}
@@ -329,21 +280,13 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
                     得分：{submission.score} 分 ({submission.gradeLetter})
                   </span>
                 </div>
-
-                <button
-                  onClick={() => downloadGradingReport(submission)}
-                  className="px-3.5 py-1.5 text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-lg transition-colors flex items-center gap-1.5 shadow-xs"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  <span>下載官方評分證明書</span>
-                </button>
               </div>
 
               {/* Written feedback */}
               <div className="p-4 bg-indigo-50/50 border border-indigo-100 rounded-lg text-xs leading-relaxed">
                 <div className="font-semibold text-indigo-900 mb-1 flex items-center gap-1.5">
                   <Sparkles className="w-4 h-4 text-indigo-600" />
-                  <span>教授評語總評 ({submission.gradedBy || '王德順 教授'})</span>
+                  <span>教授評語與批改意見 ({submission.gradedBy || '王德順 教授'})</span>
                 </div>
                 <p className="text-slate-800 whitespace-pre-wrap">
                   {submission.professorFeedback || '無特別評語。'}
@@ -351,129 +294,30 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
               </div>
             </div>
           )}
-
-          {/* Live Discussion & Questions Thread */}
-          <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-4">
-            <h3 className="text-base font-bold text-slate-900">
-              師生即時留言討論區 ({submission.comments.length} 則)
-            </h3>
-
-            <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
-              {submission.comments.length === 0 ? (
-                <div className="text-xs text-slate-400 py-4 text-center bg-slate-50 rounded-lg">
-                  目前尚無留言。若對教授評分或報告修改有疑問，可在下方提問留言。
-                </div>
-              ) : (
-                submission.comments.map((c) => (
-                  <div
-                    key={c.id}
-                    className={`p-3.5 rounded-lg text-xs space-y-1.5 ${
-                      c.authorRole === 'professor'
-                        ? 'bg-indigo-50 border border-indigo-200 text-slate-900'
-                        : 'bg-slate-50 border border-slate-200 text-slate-900 ml-4'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between text-[11px] text-slate-500">
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-slate-900">{c.authorName}</span>
-                        <span className="text-[10px] bg-white px-1.5 py-0.5 rounded border border-slate-200 font-sans">
-                          {c.authorRole === 'professor' ? '指導教授' : '學生本人'}
-                        </span>
-                        {c.pageOrSection && (
-                          <span className="text-indigo-700 font-semibold">{c.pageOrSection}</span>
-                        )}
-                      </div>
-                      <span className="font-mono">{c.createdAt}</span>
-                    </div>
-                    <p className="leading-relaxed whitespace-pre-wrap">{c.content}</p>
-                  </div>
-                ))
-              )}
-            </div>
-
-            {/* Student Comment Form */}
-            <form onSubmit={handleStudentReply} className="flex gap-2 pt-2">
-              <input
-                type="text"
-                placeholder="向教授提出問題或回覆修改說明..."
-                value={replyText}
-                onChange={(e) => setReplyText(e.target.value)}
-                className="flex-1 px-3 py-2 text-xs border border-slate-300 rounded-lg focus:border-indigo-600 focus:outline-hidden"
-              />
-              <button
-                type="submit"
-                disabled={!replyText.trim()}
-                className="px-4 py-2 text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg transition-colors flex items-center gap-1.5"
-              >
-                <Send className="w-3.5 h-3.5" />
-                <span>發送留言</span>
-              </button>
-            </form>
-          </div>
         </div>
       ) : (
         /* Report Upload Form */
         <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-6">
           <div className="border-b border-slate-100 pb-4">
             <h2 className="text-lg font-bold text-slate-900">
-              {submission ? `上傳第 ${submission.version + 1} 版修訂報告` : '繳交期末專題報告'}
+              {submission ? `上傳第 ${submission.version + 1} 版修訂期末報告` : '繳交期末報告'}
             </h2>
             <p className="text-xs text-slate-500 mt-1">
-              請確實填寫報告資訊，並上傳 PDF 或封裝壓縮檔。學號{' '}
-              <span className="font-mono font-semibold text-slate-800">{currentUser.studentId}</span> 將作為唯一學術識別記號。
+              請上傳期末報告文件 (PDF / DOCX / ZIP)。學號{' '}
+              <span className="font-mono font-semibold text-slate-800">{currentUser.studentId}</span> 與姓名{' '}
+              <span className="font-semibold text-slate-800">{currentUser.name}</span> 將自動綁定為繳交識別。
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
-            <div>
-              <label className="block text-xs font-bold text-slate-800 mb-1">
-                專題報告題目 (Title) <span className="text-rose-500">*</span>
-              </label>
-              <input
-                type="text"
-                placeholder="例如：基於微服務架構之高併發分散式快取一致性研究"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="w-full px-3.5 py-2 text-xs sm:text-sm border border-slate-300 rounded-lg focus:border-indigo-600 focus:outline-hidden"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-800 mb-1">
-                研究摘要 (Abstract) <span className="text-rose-500">*</span>
-              </label>
-              <textarea
-                rows={4}
-                placeholder="簡述研究背景、系統架構、核心創新方法、實驗數據結果與結論 (約 150-300 字)..."
-                value={abstract}
-                onChange={(e) => setAbstract(e.target.value)}
-                className="w-full px-3.5 py-2 text-xs sm:text-sm border border-slate-300 rounded-lg focus:border-indigo-600 focus:outline-hidden leading-relaxed"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-800 mb-1">
-                關鍵字標籤 (以逗點分隔)
-              </label>
-              <input
-                type="text"
-                placeholder="例如：分散式系統, 快取機制, 高併發, 容錯"
-                value={keywordInput}
-                onChange={(e) => setKeywordInput(e.target.value)}
-                className="w-full px-3.5 py-2 text-xs sm:text-sm border border-slate-300 rounded-lg focus:border-indigo-600 focus:outline-hidden"
-              />
-            </div>
-
             {/* Drag & Drop File Upload Box */}
             <div>
-              <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center justify-between mb-1.5">
                 <label className="text-xs font-bold text-slate-800">
                   報告檔案上傳 (支援 PDF, DOCX, ZIP, PPTX) <span className="text-rose-500">*</span>
                 </label>
                 <span className="text-[11px] text-indigo-700 font-medium">
-                  檔名建議：請以「學號_姓名_期末報告.pdf」
+                  檔名建議：請以「學號_姓名_科目_期末報告.pdf」
                 </span>
               </div>
 
@@ -485,7 +329,7 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
                 onDragLeave={() => setIsDragging(false)}
                 onDrop={handleDrop}
                 onClick={() => fileInputRef.current?.click()}
-                className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${
+                className={`border-2 border-dashed rounded-xl p-10 text-center cursor-pointer transition-all ${
                   isDragging
                     ? 'border-indigo-600 bg-indigo-50/50'
                     : selectedFile
@@ -534,7 +378,7 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
                         點擊選取檔案，或將報告拖曳至此處
                       </div>
                       <div className="text-[11px] text-slate-400 mt-1">
-                        系統將自動紀錄學號、SHA 檔案特徵與上傳時間戳記
+                        系統將自動記錄學號 {currentUser.studentId}、檔案大小與上傳時間戳記
                       </div>
                     </div>
                   )}

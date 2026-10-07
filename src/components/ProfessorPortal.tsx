@@ -1,19 +1,15 @@
 import React, { useState } from 'react';
-import { Submission, SubmissionComment } from '../types';
-import { exportGradebookCSV, downloadFile, downloadGradingReport } from '../utils/download';
+import { Submission } from '../types';
+import { exportGradebookCSV, downloadFile } from '../utils/download';
 import {
   FileSpreadsheet,
   Search,
-  Filter,
   Download,
   Award,
   Clock,
   CheckCircle,
   AlertTriangle,
   ArrowUpDown,
-  BookOpen,
-  MessageSquare,
-  Sparkles,
 } from 'lucide-react';
 
 interface ProfessorPortalProps {
@@ -56,7 +52,7 @@ export const ProfessorPortal: React.FC<ProfessorPortalProps> = ({
         return (
           s.studentId.toLowerCase().includes(query) ||
           s.studentName.toLowerCase().includes(query) ||
-          s.title.toLowerCase().includes(query)
+          s.fileName.toLowerCase().includes(query)
         );
       }
       return true;
@@ -100,7 +96,7 @@ export const ProfessorPortal: React.FC<ProfessorPortalProps> = ({
             微機原理與微機介面技術 期末報告審核中心
           </h1>
           <p className="text-xs text-slate-600 mt-1 max-w-2xl">
-            本系統支援學號 (32505030XX) 實名驗證繳交、論文即時核定、行內段落討論與成績報表全量匯出。
+            本系統支援學號 (32505030XX) 實名驗證繳交、報告即時核定、成績總評與全班成績報表匯出。
           </p>
         </div>
 
@@ -219,7 +215,7 @@ export const ProfessorPortal: React.FC<ProfessorPortalProps> = ({
                   </div>
                 </th>
                 <th className="py-3 px-4 font-semibold whitespace-nowrap">學生姓名</th>
-                <th className="py-3 px-4 font-semibold">報告題目與檔案</th>
+                <th className="py-3 px-4 font-semibold">期末報告檔案</th>
                 <th
                   onClick={() => toggleSort('submittedAt')}
                   className="py-3 px-4 font-semibold cursor-pointer hover:text-slate-900 whitespace-nowrap"
@@ -239,14 +235,13 @@ export const ProfessorPortal: React.FC<ProfessorPortalProps> = ({
                     <ArrowUpDown className="w-3 h-3 text-slate-400" />
                   </div>
                 </th>
-                <th className="py-3 px-4 font-semibold whitespace-nowrap">討論留言</th>
                 <th className="py-3 px-4 font-semibold text-right whitespace-nowrap">操作</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-12 text-center text-slate-400">
+                  <td colSpan={7} className="py-12 text-center text-slate-400">
                     <div className="space-y-1">
                       <p className="font-semibold text-slate-600">目前尚無已繳交之學生報告</p>
                       <p className="text-[11px] text-slate-400">
@@ -269,21 +264,22 @@ export const ProfessorPortal: React.FC<ProfessorPortalProps> = ({
                       <div className="text-[11px] text-slate-400 font-sans">{s.department}</div>
                     </td>
 
-                    {/* Title & File */}
-                    <td className="py-3 px-4 max-w-xs">
-                      <div className="font-medium text-slate-900 truncate" title={s.title}>
-                        {s.title}
+                    {/* File & Download */}
+                    <td className="py-3 px-4 max-w-sm">
+                      <div className="font-mono font-semibold text-slate-900 truncate" title={s.fileName}>
+                        {s.fileName}
                       </div>
                       <div className="flex items-center gap-2 text-[11px] text-slate-500 mt-0.5">
-                        <span className="font-mono">{s.fileName}</span>
+                        <span className="font-mono">第 {s.version} 版</span>
                         <span aria-hidden="true">·</span>
                         <span className="font-mono">{(s.fileSize / 1024 / 1024).toFixed(2)} MB</span>
                         <span aria-hidden="true">·</span>
                         <button
                           onClick={() => downloadFile(s.fileName, s.fileDataUrl, s.textContent)}
-                          className="text-indigo-600 hover:text-indigo-800 underline font-medium"
+                          className="text-indigo-600 hover:text-indigo-800 underline font-semibold flex items-center gap-1"
                         >
-                          下載
+                          <Download className="w-3 h-3" />
+                          <span>下載</span>
                         </button>
                       </div>
                     </td>
@@ -324,17 +320,6 @@ export const ProfessorPortal: React.FC<ProfessorPortalProps> = ({
                       ) : (
                         <span className="text-slate-400 font-sans">未評分</span>
                       )}
-                    </td>
-
-                    {/* Comments */}
-                    <td className="py-3 px-4 whitespace-nowrap">
-                      <button
-                        onClick={() => onOpenGrading(s)}
-                        className="inline-flex items-center gap-1 text-[11px] text-slate-600 hover:text-slate-900"
-                      >
-                        <MessageSquare className="w-3 h-3 text-slate-400" />
-                        <span className="font-mono">{s.comments.length}</span>
-                      </button>
                     </td>
 
                     {/* Actions */}

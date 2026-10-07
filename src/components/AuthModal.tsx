@@ -302,7 +302,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       <span>王德順 教授 (評審中心)</span>
                     </div>
                     <div className="text-[11px] text-slate-500 mt-0.5">
-                      審閱全班學生報告、設定評定成績與即時行內留言
+                      審閱全班學生報告、線上即時評分與評語批改
                     </div>
                   </button>
                 </div>

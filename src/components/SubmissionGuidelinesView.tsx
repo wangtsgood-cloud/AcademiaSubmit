@@ -53,9 +53,9 @@ export const SubmissionGuidelinesView: React.FC = () => {
               <strong className="text-slate-800">檔案格式：</strong>建議為標準 PDF 文件；若包含原始程式碼或附加展示檔案，可打包為 ZIP 壓縮檔。
             </li>
             <li>
-              <strong className="text-slate-800">檔名建議：</strong>請以「學號_姓名_期末報告.pdf」命名，如：
+              <strong className="text-slate-800">檔名建議：</strong>請以「學號_姓名_科目_期末報告.pdf」命名，如：
               <code className="block mt-1 font-mono text-[11px] bg-slate-100 p-1 rounded text-slate-800">
-                3250503001_王小明_期末報告.pdf
+                3250503001_王小明_微機原理_期末報告.pdf
               </code>
             </li>
             <li>
@@ -72,13 +72,13 @@ export const SubmissionGuidelinesView: React.FC = () => {
           </div>
           <ul className="space-y-2 text-slate-600 leading-relaxed list-disc list-inside">
             <li>
-              <strong className="text-slate-800">雙向即時留言：</strong>教授可在報告中針對章節進行行內留言與總評，學生可即時回覆釐清問題。
+              <strong className="text-slate-800">即時成績核定：</strong>教授線上即時審閱報告並給予百分制分數、等第與專屬批改意見。
             </li>
             <li>
-              <strong className="text-slate-800">原檔下載：</strong>學生隨時可在系統「下載原始檔案」以比對繳交完整度。
+              <strong className="text-slate-800">原檔下載機制：</strong>學生與教授皆可隨時在系統一鍵下載原始報告檔案，確保繳交完整性與留存備份。
             </li>
             <li>
-              <strong className="text-slate-800">官方成績單下載：</strong>評定完成後，學生可下載「期末專題評審證明書 (TXT/PDF)」，教授亦可全量匯出全班成績 CSV 總表。
+              <strong className="text-slate-800">全班成績匯出：</strong>評審核定完成後，教授端可匯出全班成績 CSV 總表，便於教務系統登錄與統計。
             </li>
           </ul>
         </div>
