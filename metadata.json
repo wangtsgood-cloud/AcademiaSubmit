@@ -1,0 +1,6 @@
+{
+  "name": "AcademiaSubmit - 期末報告審閱與批改平台",
+  "description": "提供學生學號安全註冊、電子郵件驗證、期末報告上傳與檔案下載，以及教授即時規準批改、評語留言與成績導出系統。",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
